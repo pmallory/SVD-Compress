@@ -11,5 +11,5 @@ if __name__ == '__main__':
 
     img_array = misc.imread(img_path)
     
-    save(os.path.splitext(img_path)[0], img_array)
+    save(os.path.splitext(img_path)[0]+'-matrix', img_array)
 
