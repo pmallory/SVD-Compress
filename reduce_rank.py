@@ -65,11 +65,9 @@ if __name__ == '__main__':
         # otherwise combine each channel's A_k into one multidimensional array
         composite_array = [array for array in rank_reduced_matrices]
 
-    misc.imshow(composite_array[0])
-
-    # save A_k to file
+    # save row reduced matrices to a file
     filename = os.path.splitext(matrix_path)[0]+'-reduced'
-    save(filename, A_k)
+    save(filename, composite_array)
 
     print 'writing rank reduced matrix to {}'.format(filename+'.npy')
     print 'Largest singular value {}'.format(singular_values[0])
