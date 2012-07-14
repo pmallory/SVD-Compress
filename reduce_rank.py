@@ -23,12 +23,15 @@ if __name__ == '__main__':
     else:
         channel_count = unpacked_matrices.shape[2]
 
+    # keep up with rank reduced matrices
     rank_reduced_matrices = []
+    # keep track of greatest and least singular value of each channel
+    gls = {}
 
     # Calculate the SVD of each color channel
     for channel_number in range(channel_count):
         if channel_count is 1:
-            # if there's only one color channel, work with it
+            # if there's only one color channel, use it
             matrix = unpacked_matrices
         else:
             # otherwise slice one m x n matrix 
@@ -58,6 +61,9 @@ if __name__ == '__main__':
         # add this row reduced matrix to the collection
         rank_reduced_matrices.append(A_k)
 
+        # record this channel's greatest and least singular values
+        gls[channel_number] = (singular_values[0], singular_values[-1])
+
     if channel_count is 1:
         # if there's only one color channel that's our image
         composite_array = rank_reduced_matrices[0]
@@ -69,7 +75,11 @@ if __name__ == '__main__':
     filename = os.path.splitext(matrix_path)[0]+'-reduced'
     save(filename, composite_array)
 
-    print 'writing rank reduced matrix to {}'.format(filename+'.npy')
-    print 'Largest singular value {}'.format(singular_values[0])
-    print 'Least singular value {}'.format(singular_values[-1])
+    print 'writing rank reduced matrix to {}\n'.format(filename+'.npy')
+
+    # print SVD stats
+    for k, v in gls.iteritems():
+        print 'Channel {}:'.format(k)
+        print '\tGreatest singular value: {}'.format(v[0])
+        print '\tLeast singular value: {}\n'.format(v[1])
 
