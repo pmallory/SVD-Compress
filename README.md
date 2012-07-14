@@ -10,7 +10,7 @@ A grayscale bitmap image is a big 2d array of numbers. Each number describes how
 Here's SVD-Compress' method:
 
 - Instead of calling each color channel an array call it a matrix. Welcome to Math Land!
-- Find three specific matrices that when multiplied together equal the original matrix. This is the hard part.
+- Find three specific matrices that when multiplied together equal the original matrix.
 - These new matrices aren't any better then the original one, but they do have one handy property: The most "significant" parts of the original matrix are all pushed to the top left corners of the three new matrices.
 - We can reduce the amount of data we're storing by chopping off the bottom right of each of the three smaller matrices. When you mulitply the trimmed matrices together you get a matrix the same size as the orignal matrix which closely resembles the original matrix, except you need less data to get it.
 - If you chopped too much the compressed version of the matrix won't look very much like the original, but if you're careful there isn't any perceptible difference between the two.
