@@ -3,20 +3,13 @@ from numpy.linalg import svd
 import argparse
 import os
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Convert a matrix to a lower rank matrix.')
-    parser.add_argument('matrix', help='the path of the <matrix>.npy file')
-    parser.add_argument('k', type=int, help='how many singular values to retain in the reduced matrix.')
-
-    args = parser.parse_args()
-    matrix_path = args.matrix
-    k = args.k
-
-    # load matrices from file. What we're getting is a multidimensional array
-    # composed of 2d arrays where each RGBA channel is it's own 2d
-    # array. Grayscale images are only one array deep.
-    unpacked_matrices = load(matrix_path)
+def reduce(array, k):
+    """Given a multidimensional array, return equally sized array of reduced rank.
     
+    array: what we're reducing. 3d and higher arrays are split into multiple 2d arrays
+           which are reduced separately.
+    k: the rank of the reduced matrix/matrices
+    """
     # how many 2d arrays we have
     if len(unpacked_matrices.shape) is 2:
         channel_count = 1
@@ -71,15 +64,36 @@ if __name__ == '__main__':
         # otherwise combine each channel's A_k into one multidimensional array
         composite_array = [array for array in rank_reduced_matrices]
 
-    # save row reduced matrices to a file
-    filename = os.path.splitext(matrix_path)[0]+'-reduced'
-    save(filename, composite_array)
-
-    print 'writing rank reduced matrix to {}\n'.format(filename+'.npy')
-
     # print SVD stats
     for k, v in gls.iteritems():
         print 'Channel {}:'.format(k)
         print '\tGreatest singular value: {}'.format(v[0])
         print '\tLeast singular value: {}\n'.format(v[1])
+
+    return composite_array
+
+if __name__ == '__main__':
+    # define command line arguments
+    parser = argparse.ArgumentParser(description='Convert a matrix to a lower rank matrix.')
+    parser.add_argument('matrix', help='the path of the <matrix>.npy file')
+    parser.add_argument('k', type=int, help='how many singular values to retain in the reduced matrix.')
+
+    # parse arguments
+    args = parser.parse_args()
+    matrix_path = args.matrix
+    k = args.k
+
+    # load matrices from file. What we're getting is a multidimensional array
+    # composed of 2d arrays where each RGBA channel is it's own 2d
+    # array. Grayscale images are only one array deep.
+    unpacked_matrices = load(matrix_path)
+    
+    reduced_matrices = reduce(unpacked_matrices, k)
+
+    # save row reduced matrices to a file
+    filename = os.path.splitext(matrix_path)[0]+'-reduced'
+    save(filename, reduced_matrices)
+
+    print 'writing rank reduced matrix to {}\n'.format(filename+'.npy')
+
 
