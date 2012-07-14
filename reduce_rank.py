@@ -12,29 +12,60 @@ if __name__ == '__main__':
     matrix_path = args.matrix
     k = args.k
 
-    # load matrix from file
-    matrix_array = load(matrix_path)
+    # load matrices from file. What we're getting is a multidimensional array
+    # composed of 2d arrays where each RGBA channel is it's own 2d
+    # array. Grayscale images are only one array deep.
+    unpacked_matrices = load(matrix_path)
+    
+    # how many 2d arrays we have
+    if len(unpacked_matrices.shape) is 2:
+        channel_count = 1
+    else:
+        channel_count = unpacked_matrices.shape[2]
 
-    # calculate:
-    #   U_transpose = [u_1 u_2 ... u_n]^T (unitary)
-    #   singular_values = [sigma_1 sigma_2 ... sigma_n] (singular values of A)
-    #   V = AUD^-1  (unitary)
-    V, singular_values, U_transpose = svd(matrix_array)
+    rank_reduced_matrices = []
 
-    # keep the k largest singular values
-    singular_values = singular_values[:k]
+    # Calculate the SVD of each color channel
+    for channel_number in range(channel_count):
+        if channel_count is 1:
+            # if there's only one color channel, work with it
+            matrix = unpacked_matrices
+        else:
+            # otherwise slice one m x n matrix 
+            matrix = unpacked_matrices[:,:,channel_number]
 
-    # make a diagonal matrix from the singular values
-    D = diag(singular_values)
+        # calculate:
+        #   V = AUD^-1  (unitary)
+        #   singular_values = [sigma_1 sigma_2 ... sigma_n] (singular values of A)
+        #   U_transpose = [u_1 u_2 ... u_n]^T (unitary)
+        V, singular_values, U_transpose = svd(matrix)
 
-    # truncate the matrices V and U^T so that they have the right dimensions
-    # for the VDU^T multiplication to work.
-    V = V[:,:k]
-    U_transpose = U_transpose[:k,:]
+        # keep the k largest singular values
+        singular_values = singular_values[:k]
 
-    # calculate A of rank k by A = VDU^T.
-    # use numpy.matrix instead of arrays so that * operator overloads as matrix multiply
-    A_k = matrix(V)*matrix(D)*matrix(U_transpose)
+        # make a diagonal matrix from the singular values
+        D = diag(singular_values)
+
+        # truncate the matrices V and U^T so that they have the right dimensions
+        # for the VDU^T multiplication to work.
+        V = V[:,:k]
+        U_transpose = U_transpose[:k,:]
+
+        # calculate A_k with A = VDU^T. treat our numpy.arrays as matrices so
+        # matrix multiplication works. 
+        A_k = asmatrix(V)*asmatrix(D)*asmatrix(U_transpose)
+
+        # add this row reduced matrix to the collection
+        rank_reduced_matrices.append(A_k)
+
+    if channel_count is 1:
+        # if there's only one color channel that's our image
+        composite_array = rank_reduced_matrices[0]
+    else:
+        # otherwise combine each channel's A_k into one multidimensional array
+        composite_array = [array for array in rank_reduced_matrices]
+
+    misc.imshow(composite_array[0])
 
     # save A_k to file
     filename = os.path.splitext(matrix_path)[0]+'-reduced'
